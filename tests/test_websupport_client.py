@@ -64,10 +64,7 @@ def test_request_auth(
             method,
             f"https://rest.websupport.sk{path or '/'}",
             request_headers={
-                "User-Agent": "python-requests/2.28.1",
-                "Accept-Encoding": "gzip, deflate",
                 "Accept": "application/json",
-                "Connection": "keep-alive",
                 "Content-Type": "application/json",
                 "Date": "2022-08-28T12:19:47.987735+00:00",
                 "Authorization": authorization,
