@@ -16,6 +16,13 @@ API_DOCS_URL = "https://rest.websupport.sk/docs/index"
 API_URL = "https://rest.websupport.sk"
 
 
+def remove_suffix(string: str, suffix: str) -> str:
+    """Remove a suffix from a string."""
+    if string.endswith(suffix):
+        return string[: -len(suffix)]
+    return string
+
+
 class Authenticator(dns_common.DNSAuthenticator):
     """
     DNS Authenticator for Websupport
@@ -166,7 +173,7 @@ class _WebsupportClient:
         method = "POST"
         json_body = {
             "type": "TXT",
-            "name": record_name.removesuffix(f".{zone}"),
+            "name": remove_suffix(record_name, f".{zone}"),
             "content": record_content,
             "ttl": record_ttl,
         }
@@ -192,7 +199,7 @@ class _WebsupportClient:
         response = self._api_request(method, path)
         if not response:
             return
-        record_name = record_name.removesuffix(f".{zone}")
+        record_name = remove_suffix(record_name, f".{zone}")
         for record in response["items"]:
             if record["type"] == "TXT" and record["name"] == record_name and record["content"] == record_content:
                 break
