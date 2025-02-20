@@ -65,7 +65,6 @@ class Authenticator(dns_common.DNSAuthenticator):
         )
 
     def _perform(self, domain: str, validation_name: str, validation: str) -> None:
-        print()
         self._get_websupport_client().add_txt_record(domain, validation_name, validation, self.ttl)
 
     def _cleanup(self, domain: str, validation_name: str, validation: str) -> None:
