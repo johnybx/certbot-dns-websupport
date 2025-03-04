@@ -10,6 +10,7 @@ from certbot import errors
 from certbot.plugins import dns_common
 from certbot.plugins.dns_common import CredentialsConfiguration
 
+
 logger = logging.getLogger(__name__)
 
 API_DOCS_URL = "https://rest.websupport.sk/docs/index"
@@ -85,7 +86,7 @@ class _WebsupportClient:
     def __init__(self, identifier: str, secret_key: str) -> None:
         self.identifier = identifier
         self.secret_key = secret_key
-        self.zone: Optional[str] = None
+        self.available_zones = None
 
     def _api_request(
         self,
@@ -135,28 +136,31 @@ class _WebsupportClient:
         logger.debug("API call result: %s", data)
         return data
 
-    def _find_zone(self, domain: str) -> str:
+    def _find_zone_in_available_zones(self, domain: str) -> str:
+        """
+        Find domain in available customer zones
+        """
+        if not self.available_zones:
+            self._get_zones(domain)
+        for zone in self.available_zones:
+            if domain.endswith(zone):
+                return zone
+        raise errors.PluginError(f"Zone not found for domain {domain}, available zones: {', '.join(self.available_zones)}")
+
+    def _get_zones(self, domain: str) -> str:
         """
         Find the most specific available zone for domain (or subdomain).
         """
         # Certbot accept only punycode format of domain but API return utf-8 format.
         domain = domain.encode().decode("idna")
-        if not self.zone:
-            path = "/v1/user/self/zone"
-            method = "GET"
-            zone_list_data = self._api_request(method, path)
-            if not zone_list_data:
-                raise errors.PluginError("No zones available for Websupport account")
-            zone_list = [zone["name"] for zone in zone_list_data["items"] if zone["name"]]
-            zone_list.sort(key=lambda item: len(item), reverse=True)
-            for zone in zone_list:
-                if domain.endswith(zone):
-                    self.zone = zone
-                    break
-            else:
-                raise errors.PluginError(f"Zone not found for domain {domain}, available zones: {', '.join(zone_list)}")
-
-        return self.zone
+        path = "/v1/user/self/zone"
+        method = "GET"
+        zone_list_data = self._api_request(method, path)
+        if not zone_list_data:
+            raise errors.PluginError("No zones available for Websupport account")
+        zone_list = [zone["name"] for zone in zone_list_data["items"] if zone["name"]]
+        zone_list.sort(key=lambda item: len(item), reverse=True)
+        self.available_zones = zone_list
 
     def add_txt_record(self, domain: str, record_name: str, record_content: str, record_ttl: int) -> None:
         """
@@ -168,7 +172,7 @@ class _WebsupportClient:
         :param int record_ttl: The record TTL (number of seconds that the record may be cached).
         :raises certbot.errors.PluginError: if an error occurs communicating with the Websupport API
         """
-        zone = self._find_zone(domain)
+        zone = self._find_zone_in_available_zones(domain)
         path = f"/v1/user/self/zone/{zone}/record"
         method = "POST"
         json_body = {
@@ -193,7 +197,7 @@ class _WebsupportClient:
         :param str record_content: The record content (typically the challenge validation).
         :raises certbot.errors.PluginError: if an error occurs communicating with the Websupport API
         """
-        zone = self._find_zone(domain)
+        zone = self._find_zone_in_available_zones(domain)
         path = f"/v1/user/self/zone/{zone}/record"
         method = "GET"
         response = self._api_request(method, path)
