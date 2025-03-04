@@ -5,9 +5,22 @@ line-length = 120
 line_length = 120
 profile = "black"
 
+[tool.ruff]
+line-length = 120
+indent-width = 4
+src = ["src", "tests"]
+
+[tool.ruff.format]
+quote-style = "double"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
 [tool.poetry]
 name = "certbot-dns-websupport"
-version = "2.0.1"
+version = "3.0.0"
 description = "This is a plugin for Certbot that uses the Websupport REST API to allow Websupport customers to prove control of a domain name."
 authors = ["johnybx"]
 license = "Apache License 2.0"
@@ -21,10 +34,11 @@ classifiers=[
     'Operating System :: POSIX :: Linux',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
     'Topic :: Internet :: WWW/HTTP',
     'Topic :: Security',
     'Topic :: System :: Installation/Setup',
@@ -34,16 +48,16 @@ classifiers=[
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-certbot = "^2.0.0"
+python = "^3.9"
+certbot = "^3.2.0"
 requests = "^2.28.1"
 
-[tool.poetry.dev-dependencies]
-tox = "^3.25.1"
-flake8 = "^5.0.4"
-pytype = {version = "^2022.8.23", python = ">=3.8,<3.11"}
-coverage = "^6.4.4"
-pytest = "^7.1.2"
+[tool.poetry.group.dev.dependencies]
+tox = "^4.24.1"
+flake8 = "^7.1.2"
+pytype = {version = "^2024.10.11", python = ">=3.10"}
+coverage = "^7.6.12"
+pytest = "^8.3.5"
 requests-mock = "^1.9.3"
 
 [tool.poetry.plugins."certbot.plugins"]

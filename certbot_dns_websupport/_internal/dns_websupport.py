@@ -1,4 +1,5 @@
 """DNS Authenticator for Websupport."""
+
 import datetime
 import hashlib
 import hmac
@@ -9,7 +10,6 @@ import requests
 from certbot import errors
 from certbot.plugins import dns_common
 from certbot.plugins.dns_common import CredentialsConfiguration
-
 
 logger = logging.getLogger(__name__)
 
@@ -84,9 +84,9 @@ class _WebsupportClient:
     """
 
     def __init__(self, identifier: str, secret_key: str) -> None:
-        self.identifier = identifier
-        self.secret_key = secret_key
-        self.available_zones = None
+        self.identifier: str = identifier
+        self.secret_key: str = secret_key
+        self.available_zones: list[str] = []
 
     def _api_request(
         self,
@@ -138,21 +138,24 @@ class _WebsupportClient:
 
     def _find_zone_in_available_zones(self, domain: str) -> str:
         """
-        Find domain in available customer zones
+        Find domain in available customer zones.
         """
         if not self.available_zones:
-            self._get_zones(domain)
+            self._get_zones()
+
+        domain = domain.encode().decode("idna")
         for zone in self.available_zones:
             if domain.endswith(zone):
                 return zone
-        raise errors.PluginError(f"Zone not found for domain {domain}, available zones: {', '.join(self.available_zones)}")
+        raise errors.PluginError(
+            f"Zone not found for domain {domain}, available zones: {', '.join(self.available_zones)}"
+        )
 
-    def _get_zones(self, domain: str) -> str:
+    def _get_zones(self):
         """
-        Find the most specific available zone for domain (or subdomain).
+        Load list of available zones.
         """
         # Certbot accept only punycode format of domain but API return utf-8 format.
-        domain = domain.encode().decode("idna")
         path = "/v1/user/self/zone"
         method = "GET"
         zone_list_data = self._api_request(method, path)
